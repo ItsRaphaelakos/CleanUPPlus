@@ -6,13 +6,24 @@ workflows:
     environment:
       xcode: latest
       vars:
-        XCODE_PROJECT: ios/CleanUpPlusIOS/CleanUpPlusIOS.xcodeproj
         XCODE_SCHEME: CleanUpPlusIOS
     scripts:
       - name: Build for iOS Simulator without signing
         script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR"
+          echo "CM_BUILD_DIR=$CM_BUILD_DIR"
+          echo "Available Xcode projects:"
+          find . -name "*.xcodeproj" -print
+          PROJECT_PATH="$(find . -name "CleanUpPlusIOS.xcodeproj" -print | sort | sed -n '1p')"
+          if [ -z "$PROJECT_PATH" ]; then
+            echo "CleanUpPlusIOS.xcodeproj was not found. Check the Codemagic project path."
+            exit 1
+          fi
+          echo "Using Xcode project: $PROJECT_PATH"
+          xcodebuild -list -project "$PROJECT_PATH"
           xcodebuild build \
-            -project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            -project "$PROJECT_PATH" \
             -scheme "$XCODE_SCHEME" \
             -configuration Debug \
             -destination "generic/platform=iOS Simulator" \
@@ -32,7 +43,6 @@ workflows:
         bundle_identifier: com.cleanup.plus.ios
       vars:
         BUNDLE_ID: com.cleanup.plus.ios
-        XCODE_PROJECT: ios/CleanUpPlusIOS/CleanUpPlusIOS.xcodeproj
         XCODE_SCHEME: CleanUpPlusIOS
     scripts:
       - name: Show Xcode version
@@ -43,8 +53,19 @@ workflows:
 
       - name: Build signed development IPA
         script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR"
+          echo "CM_BUILD_DIR=$CM_BUILD_DIR"
+          echo "Available Xcode projects:"
+          find . -name "*.xcodeproj" -print
+          PROJECT_PATH="$(find . -name "CleanUpPlusIOS.xcodeproj" -print | sort | sed -n '1p')"
+          if [ -z "$PROJECT_PATH" ]; then
+            echo "CleanUpPlusIOS.xcodeproj was not found. Check the Codemagic project path."
+            exit 1
+          fi
+          echo "Using Xcode project: $PROJECT_PATH"
           xcode-project build-ipa \
-            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            --project "$PROJECT_PATH" \
             --scheme "$XCODE_SCHEME"
 
       - name: List IPA output
