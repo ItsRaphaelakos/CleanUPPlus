@@ -1,0 +1,13 @@
+.gradle/
+build/
+.android-sdk/
+work/
+dist/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+.cxx/
+.idea/
+*.iml
+.DS_Store

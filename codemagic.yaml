@@ -1,0 +1,57 @@
+workflows:
+  ios-development-ipa:
+    name: CleanUp+ iOS Development IPA
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      xcode: latest
+      ios_signing:
+        distribution_type: development
+        bundle_identifier: com.cleanup.plus.ios
+      vars:
+        BUNDLE_ID: com.cleanup.plus.ios
+        XCODE_PROJECT: ios/CleanUpPlusIOS/CleanUpPlusIOS.xcodeproj
+        XCODE_SCHEME: CleanUpPlusIOS
+    scripts:
+      - name: Show Xcode version
+        script: xcodebuild -version
+
+      - name: Set up code signing settings
+        script: xcode-project use-profiles
+
+      - name: Build signed development IPA
+        script: |
+          xcode-project build-ipa \
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+
+      - name: List IPA output
+        script: |
+          find build/ios/ipa -maxdepth 2 -type f -print || true
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
+  ios-simulator-check:
+    name: CleanUp+ iOS Simulator Build Check
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    environment:
+      xcode: latest
+      vars:
+        XCODE_PROJECT: ios/CleanUpPlusIOS/CleanUpPlusIOS.xcodeproj
+        XCODE_SCHEME: CleanUpPlusIOS
+    scripts:
+      - name: Build for iOS Simulator without signing
+        script: |
+          xcodebuild build \
+            -project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Debug \
+            -destination "generic/platform=iOS Simulator" \
+            CODE_SIGNING_ALLOWED=NO
+    artifacts:
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
